@@ -1,0 +1,53 @@
+<launch>
+  <!-- 参数配置 -->
+  <arg name="use_hardware" default="true" doc="如果为true，连接真实机械臂"/>
+  <arg name="debug" default="false" doc="如果为true，显示调试输出"/>
+  <arg name="serial_port" default="/dev/ttyUSB0" doc="机械臂串口设备"/>
+  <arg name="baudrate" default="115200" doc="串口波特率"/>
+  
+  <!-- 启动 MoveIt! 的规划和执行组件 -->
+  <include file="$(find URDF_armv001_moveit_config)/launch/move_group.launch">
+    <arg name="publish_monitored_planning_scene" value="true" />
+  </include>
+
+  <!-- 启动 MoveIt! 的可视化组件 -->
+  <include file="$(find URDF_armv001_moveit_config)/launch/moveit_rviz.launch">
+    <arg name="rviz_config" value="$(find URDF_armv001_moveit_config)/launch/moveit.rviz"/>
+  </include>
+
+  <!-- 如果使用真实硬件，启动硬件控制节点 -->
+  <group if="$(arg use_hardware)">
+    <!-- 启动串口节点 -->
+    <node name="serial_node" pkg="URDF_armv001_demo" type="serial_node.py" output="screen">
+      <param name="port" value="$(arg serial_port)"/>
+      <param name="baudrate" value="$(arg baudrate)"/>
+    </node>
+    
+    <!-- 启动轨迹处理器节点 -->
+    <node name="trajectory_processor" pkg="URDF_armv001_demo" type="trajectory_processor.py" output="screen">
+      <param name="debug" value="$(arg debug)"/>
+    </node>
+    
+    <!-- 启动反馈处理节点 -->
+    <node name="feedback_processor" pkg="URDF_armv001_demo" type="feedback_processor.py" output="screen"/>
+    
+    <!-- 加载控制器参数 -->
+    <rosparam file="$(find URDF_armv001_moveit_config)/config/ros_controllers.yaml" command="load"/>
+    
+    <!-- 启动控制器管理器 -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+          args="joint_state_controller arm_joint_controller"/>
+  </group>
+  
+  <!-- 如果不使用真实硬件，使用虚拟关节状态发布器 -->
+  <group unless="$(arg use_hardware)">
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+      <param name="/use_gui" value="false"/> 
+      <rosparam param="/source_list">[/URDF_armv001/joint_states]</rosparam>
+    </node>
+  </group>
+
+  <!-- 机器人状态发布器 -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen"/>
+</launch> 
+

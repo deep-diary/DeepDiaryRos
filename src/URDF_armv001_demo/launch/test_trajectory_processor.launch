@@ -1,0 +1,17 @@
+<launch>
+  <!-- 加载参数 -->
+  <arg name="config_file" default="$(find URDF_armv001_demo)/config/arm_controller.yaml"/>
+  
+  <!-- 启动串口节点（带调试输出） -->
+  <include file="$(find URDF_armv001_demo)/launch/test_serial_node.launch">
+    <arg name="debug" value="false"/>
+  </include>
+  
+  <!-- 启动轨迹处理节点 -->
+  <node name="trajectory_processor" pkg="URDF_armv001_demo" type="trajectory_processor.py" output="screen">
+    <param name="config_file" value="$(arg config_file)"/>
+  </node>
+  
+  <!-- 启动rqt_console查看日志 -->
+  <node name="rqt_console" pkg="rqt_console" type="rqt_console"/>
+</launch> 

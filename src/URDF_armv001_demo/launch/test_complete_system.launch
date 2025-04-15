@@ -1,0 +1,24 @@
+<launch>
+  <!-- 加载参数，确保一致的命名空间 -->
+  <arg name="arm_name" default="URDF_armv001"/>
+  
+  <!-- 启动串口节点 -->
+  <include file="$(find URDF_armv001_demo)/launch/test_serial.launch"/>
+  
+  <!-- 启动轨迹处理器节点 -->
+  <node name="trajectory_processor" pkg="URDF_armv001_demo" type="trajectory_processor.py" output="screen">
+    <param name="config_file" value="$(find URDF_armv001_demo)/config/arm_controller.yaml"/>
+    <!-- 明确设置机械臂名称参数，确保一致性 -->
+    <param name="arm_name" value="$(arg arm_name)"/>
+  </node>
+  
+  <!-- 启动MoveIt -->
+  <include file="$(find URDF_armv001_moveit_config)/launch/demo.launch">
+    <arg name="use_gui" value="true"/>
+  </include>
+  
+  <!-- 添加调试工具 -->
+  <node name="rostopic_monitor" pkg="rostopic" type="rostopic" 
+        args="echo /$(arg arm_name)/arm_joint_controller/follow_joint_trajectory/goal" 
+        output="screen" launch-prefix="xterm -e"/>
+</launch> 

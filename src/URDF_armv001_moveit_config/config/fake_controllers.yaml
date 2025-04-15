@@ -1,0 +1,13 @@
+controller_list:
+  - name: fake_DeepArm_controller
+    type: $(arg fake_execution_type)
+    joints:
+      - first_joint
+      - second_joint
+      - third_joint
+      - fourth_joint
+      - fifth_joint
+      - sixth_joint
+initial:  # Define initial robot poses.
+  - group: DeepArm
+    pose: home

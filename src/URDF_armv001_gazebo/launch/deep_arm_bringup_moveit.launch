@@ -1,0 +1,13 @@
+<launch>
+    <!-- Launch Gazebo  -->
+    <include file="$(find URDF_armv001_gazebo)/launch/deep_arm_gazebo_world.launch" />
+
+    <!-- ros_control arm launch file -->
+    <include file="$(find URDF_armv001_gazebo)/launch/deep_arm_gazebo_states.launch" />   
+
+    <!-- ros_control trajectory control dof arm launch file -->
+    <include file="$(find URDF_armv001_gazebo)/launch/deep_arm_trajectory_controller.launch" />
+
+    <!-- moveit launch file -->
+    <include file="$(find URDF_armv001_moveit_config)/launch/moveit_planning_execution.launch" />
+</launch> 

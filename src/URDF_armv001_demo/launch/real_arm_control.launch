@@ -1,0 +1,24 @@
+<launch>
+  <!-- 参数配置 -->
+  <arg name="serial_port" default="/dev/ttyUSB0" doc="机械臂串口设备"/>
+  <arg name="baudrate" default="115200" doc="串口波特率"/>
+  <arg name="debug" default="false" doc="启用调试信息"/>
+  
+  <!-- 加载机器人描述参数 -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro --inorder '$(find URDF_armv001)/urdf/URDF_armv001.xacro'" />
+  
+  <!-- 启动机械臂控制系统 -->
+  <include file="$(find URDF_armv001_moveit_config)/launch/moveit_planning_execution.launch">
+    <arg name="use_hardware" value="true"/>
+    <arg name="serial_port" value="$(arg serial_port)"/>
+    <arg name="baudrate" value="$(arg baudrate)"/>
+    <arg name="debug" value="$(arg debug)"/>
+  </include>
+  
+  <!-- 如果开启调试，启动RQT工具 -->
+  <group if="$(arg debug)">
+    <node name="rqt_console" pkg="rqt_console" type="rqt_console"/>
+    <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph"/>
+  </group>
+</launch> 

@@ -1,0 +1,29 @@
+# 串口配置
+serial:
+  port: /dev/ttyUSB0
+  baudrate: 115200
+  timeout: 0.1
+
+# 机械臂配置
+arm:
+  name: URDF_armv001
+  # 关节名称，按照轨迹中的顺序排列
+  joint_names:
+    [
+      fifth_joint,
+      first_joint,
+      fourth_joint,
+      second_joint,
+      sixth_joint,
+      third_joint,
+    ]
+  # 每个关节对应的ID (与joint_names顺序一致)
+  joint_ids: [5, 1, 4, 2, 6, 3]
+  update_rate: 50 # Hz
+
+# 协议配置
+protocol:
+  start_marker: 255 # 0xFF
+  end_marker: 254 # 0xFE
+  cmd_type: 1 # 0x01
+  feedback_timeout: 0.5 # 秒

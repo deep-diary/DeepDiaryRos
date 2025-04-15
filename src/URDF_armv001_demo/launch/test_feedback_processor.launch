@@ -1,0 +1,19 @@
+<launch>
+  <!-- 加载参数 -->
+  <arg name="config_file" default="$(find URDF_armv001_demo)/config/arm_controller.yaml"/>
+  
+  <!-- 启动串口节点 -->
+  <include file="$(find URDF_armv001_demo)/launch/test_serial_node.launch">
+    <arg name="debug" value="false"/>
+  </include>
+  
+  <!-- 启动反馈处理节点 -->
+  <node name="feedback_processor" pkg="URDF_armv001_demo" type="feedback_processor.py" output="screen">
+    <param name="config_file" value="$(arg config_file)"/>
+  </node>
+  
+  <!-- 启动可视化工具 -->
+  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find URDF_armv001_demo)/config/test_feedback.rviz"/>
+</launch> 

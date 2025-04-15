@@ -1,0 +1,36 @@
+# 串口通信包默认配置文件
+
+# 串口设置
+port: COM17 # 串口设备
+baudrate: 921600 # 波特率
+bytesize: 8 # 数据位 (5-8)
+parity: N # 校验位 (N-无校验, E-偶校验, O-奇校验)
+stopbits: 1 # 停止位 (1, 1.5, 2)
+timeout: 0.1 # 读取超时时间(秒)
+write_timeout: 1.0 # 写入超时时间(秒)
+xonxoff: false # XON/XOFF软件流控制
+rtscts: false # RTS/CTS硬件流控制
+dsrdtr: false # DSR/DTR硬件流控制
+
+# 读取设置
+read_mode: line # 读取模式 (line-按行, raw-原始, length-固定长度)
+line_terminator: "\n" # 行结束符
+read_length: 1024 # 固定长度读取时的长度
+
+# 处理设置
+encoding: utf-8 # 字符编码
+auto_reconnect: true # 自动重连
+reconnect_delay: 2.0 # 重连延迟(秒)
+reconnect_attempts: 5 # 最大重连尝试次数
+
+# 高级设置
+buffer_size: 4096 # 缓冲区大小(字节)
+read_chunk_size: 128 # 原始模式读取的块大小(字节)
+flush_on_write: true # 写入后自动刷新缓冲区
+thread_sleep: 0.01 # 读取线程休眠时间(秒)
+line_buffer_size: 100 # 行缓冲区大小(字符)
+
+# 日志设置
+log_level: info # 日志级别 (debug, info, warning, error, critical)
+log_to_file: false # 是否记录日志到文件
+log_file: serial_comm.log # 日志文件路径

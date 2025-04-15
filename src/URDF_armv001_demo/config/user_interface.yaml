@@ -1,0 +1,42 @@
+# MoveIt用户接口配置
+
+# 机械臂配置
+arm:
+  name: DeepArm
+  group_name: DeepArm
+
+# 跟踪参数
+tracking:
+  # 位置滤波器
+  position_filter:
+    window_size: 5 # 滑动窗口大小
+    threshold: 0.005 # 位置变化阈值(米)
+
+  # 速度滤波器
+  velocity_filter:
+    smoothing_factor: 0.7 # 平滑因子(0-1)
+    max_velocity: 0.1 # 最大允许速度(米/秒)
+
+  move_interval: 0.2 # 执行移动的最小时间间隔(秒)
+
+# 预设位置
+named_targets:
+  home:
+    # 这些是预定义在MoveIt配置中的命名位置
+    description: "初始位置"
+  ready:
+    description: "准备位置"
+  forward:
+    description: "前伸位置"
+
+# 常用姿态
+common_poses:
+  hover:
+    position: [0.3, 0.0, 0.3]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+    description: "工作区中心上方"
+
+  front:
+    position: [0.35, 0.0, 0.2]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+    description: "正前方位置"

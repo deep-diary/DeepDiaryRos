@@ -1,0 +1,160 @@
+# Deep Arm 协议配置
+
+# 通信设置
+communication:
+  start_byte: 0xAA # 起始字节
+  end_byte: 0x55 # 结束字节
+  escape_byte: 0xCC # 转义字节
+  max_packet_size: 128 # 最大数据包大小
+  timeout: 1.0 # 通信超时（秒）
+
+# 命令设置
+commands:
+  # 电机控制命令
+  motor_control:
+    code: 0x01
+    parameters:
+      - name: motor_id
+        type: uint8
+        description: 电机ID
+      - name: angle
+        type: float
+        description: 目标角度
+      - name: speed
+        type: uint16
+        description: 转动速度
+
+  # 获取电机状态命令
+  get_motor_status:
+    code: 0x02
+    parameters:
+      - name: motor_id
+        type: uint8
+        description: 电机ID
+
+  # 系统复位命令
+  system_reset:
+    code: 0x03
+    parameters: []
+
+  # 读取传感器命令
+  read_sensor:
+    code: 0x04
+    parameters:
+      - name: sensor_id
+        type: uint8
+        description: 传感器ID
+
+# 响应设置
+responses:
+  # 通用响应
+  ack:
+    code: 0x80
+    parameters:
+      - name: command_code
+        type: uint8
+        description: 对应的命令代码
+      - name: status
+        type: uint8
+        description: 状态码（0表示成功）
+
+  # 电机状态响应
+  motor_status:
+    code: 0x81
+    parameters:
+      - name: motor_id
+        type: uint8
+        description: 电机ID
+      - name: current_angle
+        type: float
+        description: 当前角度
+      - name: current_speed
+        type: uint16
+        description: 当前速度
+      - name: is_moving
+        type: bool
+        description: 是否在运动
+
+  # 传感器数据响应
+  sensor_data:
+    code: 0x82
+    parameters:
+      - name: sensor_id
+        type: uint8
+        description: 传感器ID
+      - name: sensor_value
+        type: float
+        description: 传感器值
+
+# 错误码
+error_codes:
+  0x00: 成功
+  0x01: 命令未知
+  0x02: 参数错误
+  0x03: 执行失败
+  0x04: 设备忙
+  0x05: 超时
+  0x06: 校验和错误
+  0xFF: 未知错误
+
+# 机械臂协议配置
+
+# 通信协议设置
+protocol:
+  header: "AT" # 帧头
+  end_bytes: "\r\n" # 帧尾
+  master_id: "0x00fd" # 主控ID
+
+# 电机参数设置
+motor:
+  # 参数范围
+  range:
+    torque: [-10.0, 10.0] # 力矩范围
+    position: [-12.5, 12.5] # 位置范围
+    velocity: [-65.0, 65.0] # 速度范围
+    kp: [0.0, 500.0] # 位置环增益范围
+    kd: [0.0, 5.0] # 速度环增益范围
+    joint1: [-3.2, 1.8] # 关节1范围-3.57, 2
+    joint2: [-2.4, 0.8] # 关节2范围-2.58, 1
+    joint3: [-0.5, 2.0] # 关节3范围-0.78, 2.2
+    joint4: [-1.4, 2.4] # 关节4范围-1.63, 2.65
+    joint5: [-1.3, 1.3] # 关节5范围-1.55, 1.6
+    joint6: [-3.14, 3.14] # 关节6范围-3.14, 3.14
+
+  # 运行模式
+  modes:
+    mit: 0 # 运控模式
+    position: 1 # 位置模式
+    velocity: 2 # 速度模式
+    torque: 3 # 电流模式
+    zero: 4 # 零点模式
+    jog: 7 # jog模式, 0~30rad/s
+
+# 参数索引
+index:
+  RUN_MODE: "0x7005" # 运行模式,0:运控模式1:位置模式2:速度模式3:电流模式
+  IQ_REF: "0x7006" # 电流参考值,电流模式Iq指令, -27~27A
+  SPD_REF: "0x700A" # 速度参考值,速度模式Spd指令, -30~30rad/s
+  IMIT_TORQUE: "0x700B" # 力矩限制,0~12Nm
+  CUR_KP: "0x7010" # 电流环比例增益,默认值0.125
+  CUR_KI: "0x7011" # 电流环积分增益,默认值0.0158
+  CUR_FILT_GAIN: "0x7014" # 电流滤波器增益, 0~1.0，默认值0.1
+  LOC_REF: "0x7016" # 位置模式Loc指令, -12.5~12.5rad
+  LIMIT_SPD: "0x7017" # 位置模式速,度设置,0~30rad/s
+  LIMIT_CUR: "0x7018" # 速度位置模式电流设置,电流限制,0~27A
+  ARM_LOC_X: "0x8000" # 机械臂X坐标
+  ARM_LOC_Y: "0x8001" # 机械臂Y坐标
+  CAMERA_ERROR_X: "0x8010" # 相机X坐标误差
+  CAMERA_ERROR_Y: "0x8011" # 相机Y坐标误差
+  CAMERA_H_ANGLE: "0x8012" # 相机水平角度
+  CAMERA_V_ANGLE: "0x8013" # 相机垂直角度
+  CAMERA_TARGET_DETECTED: "0x8014" # 目标检测状态
+
+# 串口配置
+uart:
+  use_uart2can: true # 是否使用USB转CAN模块
+  baudrate: 921600
+  bytesize: 8
+  parity: "N"
+  stopbits: 1
+  timeout: 0.1

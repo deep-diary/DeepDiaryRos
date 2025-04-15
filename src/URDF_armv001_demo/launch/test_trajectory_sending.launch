@@ -1,0 +1,64 @@
+<launch>
+  <!-- 参数配置 -->
+  <arg name="serial_port" default="/dev/ttyUSB1" doc="机械臂串口设备"/>
+  <arg name="baudrate" default="115200" doc="串口波特率"/>
+  <arg name="use_fake_feedback" default="true" doc="使用模拟反馈"/>
+  <arg name="debug" default="true" doc="启用调试信息"/>
+  
+  <!-- 加载机器人描述参数 -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro --inorder '$(find URDF_armv001)/urdf/URDF_armv001.xacro'" />
+  
+  <!-- 启动串口节点 -->
+  <node name="serial_node" pkg="URDF_armv001_demo" type="serial_node.py" output="screen">
+    <param name="port" value="$(arg serial_port)"/>
+    <param name="baudrate" value="$(arg baudrate)"/>
+  </node>
+  
+  <!-- 启动轨迹处理器节点 -->
+  <node name="trajectory_processor" pkg="URDF_armv001_demo" type="trajectory_processor.py" output="screen">
+    <param name="debug" value="$(arg debug)"/>
+    <param name="config_file" value="$(find URDF_armv001_demo)/config/arm_controller.yaml"/>
+  </node>
+  
+  <!-- 启动Robot State Publisher - 必须要有！-->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen"/>
+  
+  <!-- 根据参数决定使用真实反馈处理或模拟反馈 -->
+  <group if="$(arg use_fake_feedback)">
+    <node name="fake_feedback" pkg="URDF_armv001_demo" type="fake_feedback.py" output="screen" respawn="true">
+      <!-- 硬编码关节名称，避免参数解析问题 -->
+    </node>
+  </group>
+  
+  <group unless="$(arg use_fake_feedback)">
+    <node name="feedback_processor" pkg="URDF_armv001_demo" type="feedback_processor.py" output="screen">
+      <param name="config_file" value="$(find URDF_armv001_demo)/config/arm_controller.yaml"/>
+    </node>
+  </group>
+  
+  <!-- 加载控制器参数 -->
+  <rosparam file="$(find URDF_armv001_moveit_config)/config/ros_controllers.yaml" command="load"/>
+  
+  <!-- 启动控制器管理器 -->
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+        args="joint_state_controller arm_joint_controller"/>
+  
+  <!-- 启动MoveIt -->
+  <include file="$(find URDF_armv001_moveit_config)/launch/move_group.launch">
+    <arg name="publish_monitored_planning_scene" value="true" />
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="fake_execution" value="false"/>
+    <arg name="info" value="true"/>
+  </include>
+  
+  <!-- 启动RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find URDF_armv001_moveit_config)/launch/moveit.rviz" required="true"/>
+  
+  <!-- 启动调试工具 -->
+  <group if="$(arg debug)">
+    <node name="rqt_console" pkg="rqt_console" type="rqt_console"/>
+    <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic"/>
+    <node name="joint_state_monitor" pkg="rostopic" type="rostopic" args="echo /joint_states" output="screen"/>
+  </group>
+</launch> 

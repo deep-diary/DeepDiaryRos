@@ -1,0 +1,17 @@
+<launch>
+  <!-- 加载机器人描述参数 -->
+  <param name="robot_description" 
+         command="$(find xacro)/xacro --inorder '$(find URDF_armv001)/urdf/URDF_armv001.xacro'" />
+  
+  <!-- 启动Robot State Publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen"/>
+  
+  <!-- 启动GUI反馈发布器 -->
+  <node name="gui_feedback" pkg="URDF_armv001_demo" type="gui_feedback.py" output="screen"/>
+  
+  <!-- 启动RViz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find URDF_armv001_moveit_config)/launch/moveit.rviz" required="true"/>
+  
+  <!-- 启动串口监视器 -->
+  <node name="serial_monitor" pkg="URDF_armv001_demo" type="serial_monitor.py" output="screen"/>
+</launch> 

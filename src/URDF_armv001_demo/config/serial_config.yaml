@@ -1,0 +1,6 @@
+# 串口节点配置
+serial:
+  port: /dev/ttyUSB0
+  baudrate: 115200
+  timeout: 0.1
+  update_rate: 50 # Hz

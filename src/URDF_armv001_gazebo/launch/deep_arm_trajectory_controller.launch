@@ -1,0 +1,8 @@
+<launch>
+    <!-- Load joint controller configurations from YAML file to parameter server -->
+    <rosparam file="$(find URDF_armv001_gazebo)/config/URDF_armv001_gazebo_controllers.yaml" command="load"/>
+
+    <!-- load the controllers -->
+    <node name="arm_controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+          output="screen" ns="/URDF_armv001" args="arm_joint_controller"/>
+</launch> 

@@ -1,0 +1,15 @@
+<launch>
+  <!-- 加载参数 -->
+  <arg name="config_file" default="$(find URDF_armv001_demo)/config/arm_controller.yaml"/>
+  <arg name="port" default="/dev/ttyUSB0"/>
+  <arg name="baudrate" default="115200"/>
+  
+  <!-- 启动控制器节点 -->
+  <node name="urdf_arm_controller" pkg="URDF_armv001_demo" type="urdf_arm_controller.py" output="screen">
+    <param name="config_file" value="$(arg config_file)"/>
+    
+    <!-- 允许从launch文件覆盖串口参数 -->
+    <param name="serial_port" value="$(arg port)"/>
+    <param name="serial_baudrate" value="$(arg baudrate)"/>
+  </node>
+</launch> 

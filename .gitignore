@@ -1,0 +1,70 @@
+# ROS specific files
+build/
+devel/
+install/
+logs/
+.catkin_workspace
+.catkin_tools/
+
+# Python files
+*.py[cod]
+*$py.class
+__pycache__/
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+ehthumbs.db
+Thumbs.db
+
+# Build artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+.pytest_cache/
+
+# Message generation
+**/msg/_*.py
+**/srv/_*.py
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Executables
+*.exe
+*.out
+*.app
+
+# ROS bags
+*.bag 

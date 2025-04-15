@@ -1,0 +1,18 @@
+URDF_armv001:
+  arm_joint_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints:
+      - first_joint
+      - second_joint
+      - third_joint
+      - fourth_joint
+      - fifth_joint
+      - sixth_joint
+
+    gains:
+      first_joint: { p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0 }
+      second_joint: { p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0 }
+      third_joint: { p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0 }
+      fourth_joint: { p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0 }
+      fifth_joint: { p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0 }
+      sixth_joint: { p: 1000.0, i: 0.0, d: 0.1, i_clamp: 0.0 }

@@ -1,0 +1,75 @@
+# 模板协议配置
+
+# 通信设置
+communication:
+  start_byte: 0xFA # 起始字节
+  end_byte: 0xFB # 结束字节
+  escape_byte: 0xFC # 转义字节
+  max_packet_size: 256 # 最大数据包大小
+  timeout: 1.0 # 通信超时（秒）
+
+# 命令设置
+commands:
+  # 示例命令1
+  command1:
+    code: 0x01
+    parameters:
+      - name: param1
+        type: uint8
+        description: 参数1描述
+      - name: param2
+        type: uint16
+        description: 参数2描述
+
+  # 示例命令2
+  command2:
+    code: 0x02
+    parameters:
+      - name: param1
+        type: float
+        description: 浮点参数
+
+  # 示例命令3
+  command3:
+    code: 0x03
+    parameters: [] # 无参数命令
+
+# 响应设置
+responses:
+  # 通用响应
+  ack:
+    code: 0x80
+    parameters:
+      - name: command_code
+        type: uint8
+        description: 对应的命令代码
+      - name: status
+        type: uint8
+        description: 状态码（0表示成功）
+
+  # 示例响应1
+  response1:
+    code: 0x81
+    parameters:
+      - name: result1
+        type: uint16
+        description: 结果1
+      - name: result2
+        type: float
+        description: 结果2
+
+  # 示例响应2
+  response2:
+    code: 0x82
+    parameters:
+      - name: data
+        type: bytes
+        description: 二进制数据
+
+# 错误码
+error_codes:
+  0x00: 成功
+  0x01: 命令未知
+  0x02: 参数错误
+  0x03: 执行失败
+  0xFF: 未知错误

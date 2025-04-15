@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: URDF_armv001
+    relative_path: urdf/deep-arm.xacro
+    xacro_args: --inorder
+  SRDF:
+    relative_path: config/URDF_armv001.srdf
+  CONFIG:
+    author_name: Blue.ge
+    author_email: deep-diary@qq.com
+    generated_timestamp: 1736948670

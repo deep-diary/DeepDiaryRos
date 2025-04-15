@@ -1,0 +1,7 @@
+<launch>
+  <!-- 启动常用的ROS工具 -->
+  <node name="rqt_graph" pkg="rqt_graph" type="rqt_graph"/>
+  <node name="rqt_topic" pkg="rqt_topic" type="rqt_topic"/>
+  <node name="rqt_console" pkg="rqt_console" type="rqt_console"/>
+  <node name="rqt_publisher" pkg="rqt_publisher" type="rqt_publisher"/>
+</launch> 
