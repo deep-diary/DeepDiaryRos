@@ -45,6 +45,8 @@ class Motor:
         # Motion control
         self.reference_position = 0.0
         self.is_enabled = False
+        self.is_initialized = False
+        self.is_updated = False
         self.step_finished = False
         
         # History records
@@ -90,6 +92,9 @@ class Motor:
         # Parse temperature data (Byte 6-7)
         self.current_temperature = struct.unpack('>H', data_bytes[6:8])[0]
         self.current_temperature = self.current_temperature / 10
+
+        # update is_updated status
+        self.is_updated = True
         
         # Update history records
         self.add_to_history(self.current_position)
@@ -176,6 +181,8 @@ class Motor:
             'current_torque': self.current_torque,
             'current_temperature': self.current_temperature,
             'is_enabled': self.is_enabled,
+            'is_initialized': self.is_initialized,
             'history_length': len(self.position_history),
-            'routine_length': len(self.routine_pts)
+            'routine_length': len(self.routine_pts),
+            'is_updated': self.is_updated
         }

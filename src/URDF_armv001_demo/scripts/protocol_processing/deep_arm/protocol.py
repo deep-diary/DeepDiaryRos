@@ -499,7 +499,7 @@ class DeepArmProtocol(ProtocolProcessor):
             return None
         
         if data[0:2] != self.AT_HEADER or data[-2:] != self.END_BYTES:
-            self.logger.error("Invalid frame: %s" % data)
+            # self.logger.error("Invalid frame: %s" % data)
             return None
         
         can_id = struct.unpack('>I', data[2:6])[0]
@@ -539,13 +539,13 @@ class DeepArmProtocol(ProtocolProcessor):
                 return "Frame format error"
             
             # Format the result
-            mode_str = "0x%02X" % parsed['mode']
-            motor_str = str(parsed['motor_id'])
-            data_str = "0x%02X" % parsed['data']
-            payload_str = ' '.join(["%02X" % b for b in parsed['payload']])
+            # mode_str = "0x%02X" % parsed['mode']
+            # motor_str = str(parsed['motor_id'])
+            # data_str = "0x%02X" % parsed['data']
+            # payload_str = ' '.join(["%02X" % b for b in parsed['payload']])
 
-            formatted = "Mode:%s Motor:%s Data:%s Payload:[%s]" % (mode_str, motor_str, data_str, payload_str)
-            self.logger.info("Parsed frame: %s" % formatted)
+            # formatted = "Mode:%s Motor:%s Data:%s Payload:[%s]" % (mode_str, motor_str, data_str, payload_str)
+            # self.logger.info("Parsed frame: %s" % formatted)
 
             return parsed
         except Exception as e:
