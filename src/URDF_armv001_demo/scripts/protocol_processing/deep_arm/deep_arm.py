@@ -114,7 +114,8 @@ class DeepArm:
                     self.logger.error("Failed to get motor %s status: %s" % (motor_id, state_error))
                 
             except Exception as e:
-                self.logger.error("Frame parsing failed: %s" % e)
+                # self.logger.error("Frame parsing failed: %s" % e)
+                pass
     
     def get_status(self, motor_ids=None):
         ids = []
@@ -334,7 +335,7 @@ class DeepArm:
         self.motors[motor_id].is_updated = False
         status = None
         try_time = 0
-        while try_time < 3: 
+        while try_time < 5: 
             # 发送模式设置帧来响应电机的数据
             frame = self.protocol.create_motor_mode_frame(motor_id, 1) # 位置模式
             self.send_frame(frame)
@@ -348,8 +349,8 @@ class DeepArm:
             self.logger.error("Motor %d position update failed" % motor_id)
             return None
         else:
-            self.logger.info("Motor %d position updated %d times" % (motor_id, try_time))
-            self.logger.info("Motor %d position: %f" % (motor_id, status['current_position']))
+            # self.logger.info("Motor %d position updated %d times" % (motor_id, try_time))
+            # self.logger.info("Motor %d position: %f" % (motor_id, status['current_position']))
             return status['current_position']
 
 
@@ -412,7 +413,7 @@ class DeepArm:
         frames = [self.motor_set_position(motor_id, position) for motor_id, position in zip(motor_ids, positions)]
         return frames
     
-    def arm_set_position_trajectory(self, trajectory=None, delay=0.1):
+    def arm_set_position_trajectory(self, trajectory=None, delay=0.05):
         if trajectory is None:
             return
 
@@ -420,8 +421,8 @@ class DeepArm:
         trajectory.append(trajectory[-1])
         # 打印轨迹
 
-        for position in trajectory:
-            self.logger.info("set position ->: %s" % position)
+        for i, position in enumerate(trajectory):
+            self.logger.info("set position %d / %d -> : %s" % (i, len(trajectory), position))
             self.arm_set_position(motor_ids=self.motor_ids, positions=position)
             time.sleep(delay)
 
@@ -486,7 +487,8 @@ class DeepArm:
         if motor_ids is None:
             motor_ids = self.motor_ids
         positions = [self.motor_get_position(motor_id) for motor_id in motor_ids]
-        self.logger.info("get_position: Motor IDs: %s" % motor_ids)
+        self.cur_pos = positions
+        # self.logger.info("get_position: Motor IDs: %s" % motor_ids)
         self.logger.info("get_position: Motor positions: %s" % positions)
         return positions
 
@@ -505,7 +507,7 @@ class DeepArm:
             # 如果未指定电机ID，则获取当前电机ID
             motor_ids = self.motor_ids
         # 打印电机ID
-        self.logger.info("get_status: Motor IDs: %s" % motor_ids)
+        # self.logger.info("get_status: Motor IDs: %s" % motor_ids)
 
         for motor_id in motor_ids:
             motor_state = self.motors[motor_id].get_status()
@@ -519,7 +521,7 @@ class DeepArm:
             is_updated.append(motor_state['is_updated'])
 
         # 写入log   
-        self.logger.info("All motors status start:--------------------------------")
+        # self.logger.info("All motors status start:--------------------------------")
         # self.logger.info("ids: %s" % ids)
         self.logger.info("positions: %s" % positions)
         # self.logger.info("velocities: %s" % velocities)
@@ -527,7 +529,7 @@ class DeepArm:
         # self.logger.info("temperature: %s" % temperature)
         # self.logger.info("enabled: %s" % enabled)
         # self.logger.info("initialized: %s" % initialized)
-        self.logger.info("All motors status end:--------------------------------")
+        # self.logger.info("All motors status end:--------------------------------")
 
         self.cur_pos = positions
 
@@ -546,7 +548,7 @@ class DeepArm:
         for motor_id in self.motor_ids:
             self.motors[motor_id].is_updated = False
 
-    def arm_mov_to_position(self, position=None):
+    def arm_mov_to_position(self, position=None, max_velocity=1.0, acceleration=2.0, samples=50):
         """
         移动到指定位置
         """
@@ -556,17 +558,17 @@ class DeepArm:
         # 临时强制设定当前位置
         # self.cur_pos = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
         # 设置合理的速度和加速度参数
-        max_velocity = 1.0  # 最大速度
-        acceleration = 2.0  # 加速度
+        # max_velocity = 1.0  # 最大速度
+        # acceleration = 2.0  # 加速度
         
         trajectory = self.arm_set_position_trapezoidal(
             start_pos=self.cur_pos,
             end_pos=position,
             max_velocity=max_velocity,
             acceleration=acceleration,
-            samples=20
+            samples=samples
         )
-        self.arm_set_position_trajectory(trajectory=trajectory)
+        self.arm_set_position_trajectory(trajectory=trajectory, delay=0.02)
 
     def arm_back_to_home(self):
         """
@@ -576,7 +578,7 @@ class DeepArm:
         self.logger.info('will back to home from {}'.format(self.cur_pos))
         self.arm_mov_to_position(position=self.home_pos)
 
-    def arm_set_position_trapezoidal(self, start_pos, end_pos, max_velocity=2.0, acceleration=0.5, samples=20):
+    def arm_set_position_trapezoidal(self, start_pos, end_pos, max_velocity=2.0, acceleration=0.5, samples=50):
         """
         生成梯形速度曲线的轨迹
         
@@ -672,7 +674,7 @@ class DeepArm:
             self.logger.error("Failed to generate trapezoidal trajectory: {}".format(e))
             return []
 
-    def arm_set_position_quintic(self, position_list=None, samples=20):
+    def arm_set_position_quintic(self, position_list=None, fine_tune_freq=20):
         """
         使用五次样条插值生成平滑轨迹
         
@@ -700,7 +702,7 @@ class DeepArm:
             t = np.linspace(0, len(position_list) - 1, len(position_list))
             
             # 生成插值点
-            t_new = np.linspace(0, len(position_list) - 1, (len(position_list) - 1) * samples + 1)
+            t_new = np.linspace(0, len(position_list) - 1, (len(position_list) - 1) * fine_tune_freq + 1)
             
             # 对每个关节分别进行插值
             interpolated_positions = []

@@ -43,18 +43,22 @@ class Teaching:
         
         # 示教相关属性
         self.teaching_mode = False
-        self.teach_interval = 1.0
+        self.interval_teach = 0.2
+        self.interval_add_point = 0.5
         self.last_teach_time = 0
         self.routine_points = []
         self.teach_thread = None
         self.teach_thread_running = False
         self.target_position = None
         self.teaching_status = 'None'  # None, Ready, Teaching, Executing
+        self.routine_points_fine_tune = []
+        self.is_periodic_add_point = True
+        self.fine_tune_freq = 20
+
         # None: not in teaching mode or stop recording
         # Ready: enable moving the arm without recording
         # Teaching: recording the arm movement
         # Executing: executing the recorded path
-        self.is_recording = False
 
     def teach_ready(self):
         """
@@ -88,6 +92,8 @@ class Teaching:
         if self.teaching_mode:
             self.logger.warning("Teaching mode is already started")
             return False
+        
+        self.teach_ready()
        
             
         try:
@@ -138,6 +144,7 @@ class Teaching:
         except Exception as e:
             self.logger.error("Failed to stop teaching mode: {}".format(e))
             return False
+        
 
     def _teaching_thread(self):
         """示教模式下的位置查询线程"""
@@ -145,8 +152,9 @@ class Teaching:
             try:
                 # 查询所有电机位置,查询之前需要发送指令才会返回
                 self.deep_arm.arm_set_position(motor_ids=self.deep_arm.motor_ids, positions=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-                time.sleep(0.2)
-                self.teach_add_point()
+                time.sleep(self.interval_teach)
+                if self.is_periodic_add_point:
+                    self.teach_update()
             except Exception as e:
                 self.logger.error("Error in teaching thread: {}".format(e))
                 time.sleep(0.2)
@@ -175,7 +183,7 @@ class Teaching:
             return
             
         current_time = time.time()
-        if current_time - self.last_teach_time >= self.teach_interval:
+        if current_time - self.last_teach_time >= self.interval_add_point:
             if self.teach_add_point():
                 self.last_teach_time = current_time
 
@@ -229,7 +237,7 @@ class Teaching:
             self.logger.error("Failed to save routine: {}".format(e))
             return False
 
-    def load_routine_from_config(self, file_path=None):
+    def load_routine_from_config(self, file_path=None, fine_tune_freq=25):
         """从配置文件加载示教路径
         
         Args:
@@ -258,6 +266,11 @@ class Teaching:
                 routine_data = json.load(f)
             
             self.routine_points = routine_data['points']
+            if not self.routine_points:
+                self.logger.warning("No routine points to execute")
+                return False
+            # 对电机轨迹进行五次样条插值
+            self.routine_points_fine_tune = self.deep_arm.arm_set_position_quintic(self.routine_points, fine_tune_freq=fine_tune_freq)
             
             self.logger.info("Loaded routine from {}".format(file_path))
             self.logger.info("Total points: {}".format(len(self.routine_points)))
@@ -267,10 +280,11 @@ class Teaching:
             self.logger.error("Failed to load routine: {}".format(e))
             return False
 
-    def execute_routine(self, update_callback=None):
+    def execute_routine(self, excute_times=1, update_callback=None):
         """执行示教路径
         
         Args:
+            excute_times: 执行次数
             update_callback: 更新回调函数，用于实时更新状态
             
         Returns:
@@ -280,32 +294,39 @@ class Teaching:
             # 先使能电机
             self.deep_arm.arm_enable()
 
-            # 循环3次发送查询指令，直到所有电机状态有更新，那就说明已经获取到了最新的电机位置状态
-            self.cur_pos = self.deep_arm.arm_get_position()
+
 
             # 先加载路径
-            if not self.load_routine_from_config():
+            if not self.load_routine_from_config(fine_tune_freq=self.fine_tune_freq):
                 return False
             
-            if not self.routine_points:
-                self.logger.warning("No routine points to execute")
-                return False
-            
-            self.logger.info("Executing routine with {} points".format(len(self.routine_points)))
 
-            # 对电机轨迹进行五次样条插值
-            self.routine_points = self.deep_arm.arm_set_position_quintic(self.routine_points, samples=10)
+            for i in range(excute_times):
 
-            # 显示曲线
-            self.deep_arm.plot_trajectory_positions(self.routine_points)
+                # 从当前值运行到轨迹的第一个点 TODO: 当前值好像不对
+                self.logger.info('--------------------------------loop {}--------------------------------'.format(i))
+                self.logger.info('----------------will move to first point of routine {} '.format(self.routine_points_fine_tune[0]))
 
-            # 从当前值运行到轨迹的第一个点
-            self.logger.info('will move to first point of routine from {}'.format(self.cur_pos))
-            self.deep_arm.arm_mov_to_position(position=self.routine_points[0])
 
-            # 开始运行整条轨迹
-            self.deep_arm.arm_set_position_trajectory(trajectory=self.routine_points, delay=0.02)
-            
+                self.logger.info('----------------current position: {}'.format(self.deep_arm.cur_pos))
+                # 循环3次发送查询指令，直到所有电机状态有更新，那就说明已经获取到了最新的电机位置状态
+                self.deep_arm.arm_get_position()
+                self.logger.info('----------------current position: {}'.format(self.deep_arm.cur_pos))
+
+                self.deep_arm.arm_mov_to_position(position=self.routine_points_fine_tune[0], samples=50)
+                time.sleep(1)
+                self.logger.info('----------------already move to the first point of routine {}'.format(self.routine_points_fine_tune[0]))
+                self.logger.info('----------------current position: {}'.format(self.deep_arm.cur_pos))
+
+                # 开始运行整条轨迹
+                self.deep_arm.arm_set_position_trajectory(trajectory=self.routine_points_fine_tune, delay=0.02)
+                time.sleep(6)
+                self.logger.info('----------------already move to the last point of routine {}'.format(self.routine_points_fine_tune[-1]))
+                self.logger.info('----------------current position: {}'.format(self.deep_arm.cur_pos))
+
+
+            # 回到home位置
+            # self.deep_arm.arm_back_to_home()
             
             self.logger.info("Routine execution completed")
             return True
@@ -365,15 +386,17 @@ class Teaching:
         self.logger.info("  i - Initialize motors")
         self.logger.info("  e - Enable motors")
         self.logger.info("  d - Disable motors")
-        self.logger.info("  r - Ready for teaching")
+        self.logger.info("  a - Add the teaching point")
         self.logger.info("  s - Start teaching")
         self.logger.info("  t - Stop teaching")
         self.logger.info("  x - Execute routine")
+        self.logger.info("  p - Display curve")
+        self.logger.info("  h - Go home")
         self.logger.info("  q - Quit")
         
         try:
             while True:
-                cmd = raw_input("\nEnter command (i/e/d/r/s/t/x/q): ").strip().lower()
+                cmd = raw_input("\nEnter command (i/e/d/a/s/t/x/p/h/q): ").strip().lower()
                 self.logger.info("Received command: {}".format(cmd))
                 
                 if cmd == 'q':
@@ -392,13 +415,13 @@ class Teaching:
                     self.logger.info("Disabling motors...")
                     self.deep_arm.arm_disable()
                     
-                elif cmd == 'r':
-                    self.logger.info("Preparing for teaching...")
-                    self.teach_ready()
-                    
                 elif cmd == 's':
                     self.logger.info("Starting teaching mode...")
                     self.teach_start()
+
+                elif cmd == 'a':
+                    self.logger.info("Adding point...")
+                    self.teach_add_point()
                     
                 elif cmd == 't':
                     self.logger.info("Stopping teaching mode...")
@@ -406,7 +429,18 @@ class Teaching:
                     
                 elif cmd == 'x':
                     self.logger.info("Executing routine...")
-                    self.execute_routine()
+                    self.execute_routine(excute_times=1)
+                    
+                elif cmd == 'p':
+                    self.logger.info("Displaying curve...")
+                    # 如果路径为空，则先加载路径
+                    if not self.routine_points_fine_tune:
+                        self.load_routine_from_config()
+                    self.deep_arm.plot_trajectory_positions(self.routine_points_fine_tune)
+                    
+                elif cmd == 'h':
+                    self.logger.info("Going home...")
+                    self.deep_arm.arm_back_to_home()
                     
                 else:
                     self.logger.warning("Unknown command. Please try again.")
